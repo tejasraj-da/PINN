@@ -1,0 +1,188 @@
+<html>
+<head>
+<title>PINN.ipynb</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<style type="text/css">
+.s0 { color: #bcbec4;}
+.s1 { color: #7a7e85;}
+.s2 { color: #cf8e6d;}
+.s3 { color: #bcbec4;}
+.s4 { color: #2aacb8;}
+.s5 { color: #6aab73;}
+.ls0 { height: 1px; border-width: 0; color: #43454a; background-color:#43454a}
+</style>
+</head>
+<body bgcolor="#191a1c">
+<table CELLSPACING=0 CELLPADDING=5 COLS=1 WIDTH="100%" BGCOLOR="#606060" >
+<tr><td><center>
+<font face="Arial, Helvetica" color="#000000">
+PINN.ipynb</font>
+</center></td></tr></table>
+<pre><span class="s0">#%% 
+</span><span class="s1">#TEJAS RAJ</span>
+<span class="s1">#1VE23CD057</span>
+
+<span class="s2">import </span><span class="s0">numpy </span><span class="s2">as </span><span class="s0">np</span>
+<span class="s2">import </span><span class="s0">matplotlib</span><span class="s3">.</span><span class="s0">pyplot </span><span class="s2">as </span><span class="s0">plt</span>
+<span class="s2">import </span><span class="s0">torch</span>
+<span class="s2">import </span><span class="s0">torch</span><span class="s3">.</span><span class="s0">nn </span><span class="s2">as </span><span class="s0">nn</span>
+
+<span class="s0">torch</span><span class="s3">.</span><span class="s0">manual_seed</span><span class="s3">(</span><span class="s4">42</span><span class="s3">)</span>
+<span class="s0">np</span><span class="s3">.</span><span class="s0">random</span><span class="s3">.</span><span class="s0">seed</span><span class="s3">(</span><span class="s4">42</span><span class="s3">)</span>
+
+<span class="s0">device </span><span class="s3">= </span><span class="s0">torch</span><span class="s3">.</span><span class="s0">device</span><span class="s3">(</span>
+    <span class="s5">&quot;cuda&quot; </span><span class="s2">if </span><span class="s0">torch</span><span class="s3">.</span><span class="s0">cuda</span><span class="s3">.</span><span class="s0">is_available</span><span class="s3">() </span><span class="s2">else </span><span class="s5">&quot;cpu&quot;</span>
+<span class="s3">)</span>
+
+<span class="s0">print</span><span class="s3">(</span><span class="s5">&quot;Using device:&quot;</span><span class="s3">, </span><span class="s0">device</span><span class="s3">)</span><hr class="ls0"><span class="s0">#%% 
+</span><span class="s2">class </span><span class="s0">PINN</span><span class="s3">(</span><span class="s0">nn</span><span class="s3">.</span><span class="s0">Module</span><span class="s3">):</span>
+    <span class="s2">def </span><span class="s0">__init__</span><span class="s3">(</span><span class="s0">self</span><span class="s3">):</span>
+        <span class="s0">super</span><span class="s3">().</span><span class="s0">__init__</span><span class="s3">()</span>
+
+        <span class="s0">self</span><span class="s3">.</span><span class="s0">network </span><span class="s3">= </span><span class="s0">nn</span><span class="s3">.</span><span class="s0">Sequential</span><span class="s3">(</span>
+            <span class="s0">nn</span><span class="s3">.</span><span class="s0">Linear</span><span class="s3">(</span><span class="s4">2</span><span class="s3">, </span><span class="s4">32</span><span class="s3">),</span>
+            <span class="s0">nn</span><span class="s3">.</span><span class="s0">Tanh</span><span class="s3">(),</span>
+            <span class="s0">nn</span><span class="s3">.</span><span class="s0">Linear</span><span class="s3">(</span><span class="s4">32</span><span class="s3">, </span><span class="s4">32</span><span class="s3">),</span>
+            <span class="s0">nn</span><span class="s3">.</span><span class="s0">Tanh</span><span class="s3">(),</span>
+            <span class="s0">nn</span><span class="s3">.</span><span class="s0">Linear</span><span class="s3">(</span><span class="s4">32</span><span class="s3">, </span><span class="s4">32</span><span class="s3">),</span>
+            <span class="s0">nn</span><span class="s3">.</span><span class="s0">Tanh</span><span class="s3">(),</span>
+            <span class="s0">nn</span><span class="s3">.</span><span class="s0">Linear</span><span class="s3">(</span><span class="s4">32</span><span class="s3">, </span><span class="s4">1</span><span class="s3">)</span>
+        <span class="s3">)</span>
+
+    <span class="s2">def </span><span class="s0">forward</span><span class="s3">(</span><span class="s0">self</span><span class="s3">, </span><span class="s0">x</span><span class="s3">, </span><span class="s0">t</span><span class="s3">):</span>
+        <span class="s0">inputs </span><span class="s3">= </span><span class="s0">torch</span><span class="s3">.</span><span class="s0">cat</span><span class="s3">([</span><span class="s0">x</span><span class="s3">, </span><span class="s0">t</span><span class="s3">], </span><span class="s0">dim</span><span class="s3">=</span><span class="s4">1</span><span class="s3">)</span>
+        <span class="s2">return </span><span class="s0">self</span><span class="s3">.</span><span class="s0">network</span><span class="s3">(</span><span class="s0">inputs</span><span class="s3">)</span>
+
+
+<span class="s0">model </span><span class="s3">= </span><span class="s0">PINN</span><span class="s3">().</span><span class="s0">to</span><span class="s3">(</span><span class="s0">device</span><span class="s3">)</span>
+
+<span class="s0">optimizer </span><span class="s3">= </span><span class="s0">torch</span><span class="s3">.</span><span class="s0">optim</span><span class="s3">.</span><span class="s0">Adam</span><span class="s3">(</span>
+    <span class="s0">model</span><span class="s3">.</span><span class="s0">parameters</span><span class="s3">(), </span><span class="s0">lr</span><span class="s3">=</span><span class="s4">0.001</span>
+<span class="s3">)</span>
+
+<span class="s0">alpha </span><span class="s3">= </span><span class="s4">0.1</span>
+
+<span class="s0">print</span><span class="s3">(</span><span class="s0">model</span><span class="s3">)</span><hr class="ls0"><span class="s0">#%% 
+</span><span class="s1"># Points inside the space-time domain</span>
+<span class="s0">N_f </span><span class="s3">= </span><span class="s4">2000</span>
+
+<span class="s0">x_f </span><span class="s3">= </span><span class="s0">torch</span><span class="s3">.</span><span class="s0">rand</span><span class="s3">(</span><span class="s0">N_f</span><span class="s3">, </span><span class="s4">1</span><span class="s3">, </span><span class="s0">device</span><span class="s3">=</span><span class="s0">device</span><span class="s3">)</span>
+<span class="s0">t_f </span><span class="s3">= </span><span class="s0">torch</span><span class="s3">.</span><span class="s0">rand</span><span class="s3">(</span><span class="s0">N_f</span><span class="s3">, </span><span class="s4">1</span><span class="s3">, </span><span class="s0">device</span><span class="s3">=</span><span class="s0">device</span><span class="s3">)</span>
+
+<span class="s0">x_f</span><span class="s3">.</span><span class="s0">requires_grad_</span><span class="s3">(</span><span class="s2">True</span><span class="s3">)</span>
+<span class="s0">t_f</span><span class="s3">.</span><span class="s0">requires_grad_</span><span class="s3">(</span><span class="s2">True</span><span class="s3">)</span>
+
+<span class="s1"># Initial condition: T(x, 0) = sin(pi*x)</span>
+<span class="s0">N_i </span><span class="s3">= </span><span class="s4">200</span>
+
+<span class="s0">x_i </span><span class="s3">= </span><span class="s0">torch</span><span class="s3">.</span><span class="s0">rand</span><span class="s3">(</span><span class="s0">N_i</span><span class="s3">, </span><span class="s4">1</span><span class="s3">, </span><span class="s0">device</span><span class="s3">=</span><span class="s0">device</span><span class="s3">)</span>
+<span class="s0">t_i </span><span class="s3">= </span><span class="s0">torch</span><span class="s3">.</span><span class="s0">zeros_like</span><span class="s3">(</span><span class="s0">x_i</span><span class="s3">)</span>
+
+<span class="s0">T_i </span><span class="s3">= </span><span class="s0">torch</span><span class="s3">.</span><span class="s0">sin</span><span class="s3">(</span><span class="s0">np</span><span class="s3">.</span><span class="s0">pi </span><span class="s3">* </span><span class="s0">x_i</span><span class="s3">)</span>
+
+<span class="s1"># Boundary conditions: T(0,t) = T(1,t) = 0</span>
+<span class="s0">N_b </span><span class="s3">= </span><span class="s4">200</span>
+
+<span class="s0">t_b </span><span class="s3">= </span><span class="s0">torch</span><span class="s3">.</span><span class="s0">rand</span><span class="s3">(</span><span class="s0">N_b</span><span class="s3">, </span><span class="s4">1</span><span class="s3">, </span><span class="s0">device</span><span class="s3">=</span><span class="s0">device</span><span class="s3">)</span>
+
+<span class="s0">x_left </span><span class="s3">= </span><span class="s0">torch</span><span class="s3">.</span><span class="s0">zeros_like</span><span class="s3">(</span><span class="s0">t_b</span><span class="s3">)</span>
+<span class="s0">x_right </span><span class="s3">= </span><span class="s0">torch</span><span class="s3">.</span><span class="s0">ones_like</span><span class="s3">(</span><span class="s0">t_b</span><span class="s3">)</span>
+
+<span class="s0">print</span><span class="s3">(</span><span class="s5">&quot;Physics points:&quot;</span><span class="s3">, </span><span class="s0">N_f</span><span class="s3">)</span>
+<span class="s0">print</span><span class="s3">(</span><span class="s5">&quot;Initial points:&quot;</span><span class="s3">, </span><span class="s0">N_i</span><span class="s3">)</span>
+<span class="s0">print</span><span class="s3">(</span><span class="s5">&quot;Boundary points:&quot;</span><span class="s3">, </span><span class="s4">2 </span><span class="s3">* </span><span class="s0">N_b</span><span class="s3">)</span><hr class="ls0"><span class="s0">#%% 
+</span><span class="s2">def </span><span class="s0">pinn_loss</span><span class="s3">():</span>
+    <span class="s1"># Predict temperature inside the domain</span>
+    <span class="s0">T_f </span><span class="s3">= </span><span class="s0">model</span><span class="s3">(</span><span class="s0">x_f</span><span class="s3">, </span><span class="s0">t_f</span><span class="s3">)</span>
+
+    <span class="s1"># First derivatives</span>
+    <span class="s0">T_t </span><span class="s3">= </span><span class="s0">torch</span><span class="s3">.</span><span class="s0">autograd</span><span class="s3">.</span><span class="s0">grad</span><span class="s3">(</span>
+        <span class="s0">T_f</span><span class="s3">, </span><span class="s0">t_f</span><span class="s3">,</span>
+        <span class="s0">grad_outputs</span><span class="s3">=</span><span class="s0">torch</span><span class="s3">.</span><span class="s0">ones_like</span><span class="s3">(</span><span class="s0">T_f</span><span class="s3">),</span>
+        <span class="s0">create_graph</span><span class="s3">=</span><span class="s2">True</span>
+    <span class="s3">)[</span><span class="s4">0</span><span class="s3">]</span>
+
+    <span class="s0">T_x </span><span class="s3">= </span><span class="s0">torch</span><span class="s3">.</span><span class="s0">autograd</span><span class="s3">.</span><span class="s0">grad</span><span class="s3">(</span>
+        <span class="s0">T_f</span><span class="s3">, </span><span class="s0">x_f</span><span class="s3">,</span>
+        <span class="s0">grad_outputs</span><span class="s3">=</span><span class="s0">torch</span><span class="s3">.</span><span class="s0">ones_like</span><span class="s3">(</span><span class="s0">T_f</span><span class="s3">),</span>
+        <span class="s0">create_graph</span><span class="s3">=</span><span class="s2">True</span>
+    <span class="s3">)[</span><span class="s4">0</span><span class="s3">]</span>
+
+    <span class="s1"># Second derivative with respect to position</span>
+    <span class="s0">T_xx </span><span class="s3">= </span><span class="s0">torch</span><span class="s3">.</span><span class="s0">autograd</span><span class="s3">.</span><span class="s0">grad</span><span class="s3">(</span>
+        <span class="s0">T_x</span><span class="s3">, </span><span class="s0">x_f</span><span class="s3">,</span>
+        <span class="s0">grad_outputs</span><span class="s3">=</span><span class="s0">torch</span><span class="s3">.</span><span class="s0">ones_like</span><span class="s3">(</span><span class="s0">T_x</span><span class="s3">),</span>
+        <span class="s0">create_graph</span><span class="s3">=</span><span class="s2">True</span>
+    <span class="s3">)[</span><span class="s4">0</span><span class="s3">]</span>
+
+    <span class="s1"># Heat equation residual</span>
+    <span class="s0">residual </span><span class="s3">= </span><span class="s0">T_t </span><span class="s3">- </span><span class="s0">alpha </span><span class="s3">* </span><span class="s0">T_xx</span>
+
+    <span class="s0">loss_physics </span><span class="s3">= </span><span class="s0">torch</span><span class="s3">.</span><span class="s0">mean</span><span class="s3">(</span><span class="s0">residual</span><span class="s3">**</span><span class="s4">2</span><span class="s3">)</span>
+
+    <span class="s1"># Initial condition loss</span>
+    <span class="s0">T_initial_pred </span><span class="s3">= </span><span class="s0">model</span><span class="s3">(</span><span class="s0">x_i</span><span class="s3">, </span><span class="s0">t_i</span><span class="s3">)</span>
+
+    <span class="s0">loss_initial </span><span class="s3">= </span><span class="s0">torch</span><span class="s3">.</span><span class="s0">mean</span><span class="s3">(</span>
+        <span class="s3">(</span><span class="s0">T_initial_pred </span><span class="s3">- </span><span class="s0">T_i</span><span class="s3">)**</span><span class="s4">2</span>
+    <span class="s3">)</span>
+
+    <span class="s1"># Boundary condition losses</span>
+    <span class="s0">T_left </span><span class="s3">= </span><span class="s0">model</span><span class="s3">(</span><span class="s0">x_left</span><span class="s3">, </span><span class="s0">t_b</span><span class="s3">)</span>
+    <span class="s0">T_right </span><span class="s3">= </span><span class="s0">model</span><span class="s3">(</span><span class="s0">x_right</span><span class="s3">, </span><span class="s0">t_b</span><span class="s3">)</span>
+
+    <span class="s0">loss_boundary </span><span class="s3">= (</span>
+        <span class="s0">torch</span><span class="s3">.</span><span class="s0">mean</span><span class="s3">(</span><span class="s0">T_left</span><span class="s3">**</span><span class="s4">2</span><span class="s3">)</span>
+        <span class="s3">+ </span><span class="s0">torch</span><span class="s3">.</span><span class="s0">mean</span><span class="s3">(</span><span class="s0">T_right</span><span class="s3">**</span><span class="s4">2</span><span class="s3">)</span>
+    <span class="s3">)</span>
+
+    <span class="s1"># Total PINN loss</span>
+    <span class="s0">total_loss </span><span class="s3">= (</span>
+        <span class="s0">loss_physics</span>
+        <span class="s3">+ </span><span class="s0">loss_initial</span>
+        <span class="s3">+ </span><span class="s0">loss_boundary</span>
+    <span class="s3">)</span>
+
+    <span class="s2">return </span><span class="s3">(</span>
+        <span class="s0">total_loss</span><span class="s3">,</span>
+        <span class="s0">loss_physics</span><span class="s3">,</span>
+        <span class="s0">loss_initial</span><span class="s3">,</span>
+        <span class="s0">loss_boundary</span>
+    <span class="s3">)</span><hr class="ls0"><span class="s0">#%% 
+epochs </span><span class="s3">= </span><span class="s4">3000</span>
+<span class="s0">loss_history </span><span class="s3">= []</span>
+
+<span class="s2">for </span><span class="s0">epoch </span><span class="s2">in </span><span class="s0">range</span><span class="s3">(</span><span class="s0">epochs</span><span class="s3">):</span>
+
+    <span class="s0">optimizer</span><span class="s3">.</span><span class="s0">zero_grad</span><span class="s3">()</span>
+
+    <span class="s0">total</span><span class="s3">, </span><span class="s0">physics</span><span class="s3">, </span><span class="s0">initial</span><span class="s3">, </span><span class="s0">boundary </span><span class="s3">= </span><span class="s0">pinn_loss</span><span class="s3">()</span>
+
+    <span class="s0">total</span><span class="s3">.</span><span class="s0">backward</span><span class="s3">()</span>
+    <span class="s0">optimizer</span><span class="s3">.</span><span class="s0">step</span><span class="s3">()</span>
+
+    <span class="s0">loss_history</span><span class="s3">.</span><span class="s0">append</span><span class="s3">(</span><span class="s0">total</span><span class="s3">.</span><span class="s0">item</span><span class="s3">())</span>
+
+    <span class="s2">if </span><span class="s3">(</span><span class="s0">epoch </span><span class="s3">+ </span><span class="s4">1</span><span class="s3">) % </span><span class="s4">500 </span><span class="s3">== </span><span class="s4">0</span><span class="s3">:</span>
+        <span class="s0">print</span><span class="s3">(</span>
+            <span class="s5">f&quot;Epoch </span><span class="s2">{</span><span class="s0">epoch </span><span class="s3">+ </span><span class="s4">1</span><span class="s2">:</span><span class="s5">4d</span><span class="s2">} </span><span class="s5">| &quot;</span>
+            <span class="s5">f&quot;Total Loss: </span><span class="s2">{</span><span class="s0">total</span><span class="s3">.</span><span class="s0">item</span><span class="s3">()</span><span class="s2">:</span><span class="s5">.6e</span><span class="s2">} </span><span class="s5">| &quot;</span>
+            <span class="s5">f&quot;Physics: </span><span class="s2">{</span><span class="s0">physics</span><span class="s3">.</span><span class="s0">item</span><span class="s3">()</span><span class="s2">:</span><span class="s5">.6e</span><span class="s2">} </span><span class="s5">| &quot;</span>
+            <span class="s5">f&quot;Initial: </span><span class="s2">{</span><span class="s0">initial</span><span class="s3">.</span><span class="s0">item</span><span class="s3">()</span><span class="s2">:</span><span class="s5">.6e</span><span class="s2">} </span><span class="s5">| &quot;</span>
+            <span class="s5">f&quot;Boundary: </span><span class="s2">{</span><span class="s0">boundary</span><span class="s3">.</span><span class="s0">item</span><span class="s3">()</span><span class="s2">:</span><span class="s5">.6e</span><span class="s2">}</span><span class="s5">&quot;</span>
+        <span class="s3">)</span><hr class="ls0"><span class="s0">#%% 
+plt</span><span class="s3">.</span><span class="s0">figure</span><span class="s3">(</span><span class="s0">figsize</span><span class="s3">=(</span><span class="s4">8</span><span class="s3">, </span><span class="s4">4</span><span class="s3">))</span>
+
+<span class="s0">plt</span><span class="s3">.</span><span class="s0">plot</span><span class="s3">(</span><span class="s0">loss_history</span><span class="s3">)</span>
+
+<span class="s0">plt</span><span class="s3">.</span><span class="s0">xlabel</span><span class="s3">(</span><span class="s5">&quot;Epoch&quot;</span><span class="s3">)</span>
+<span class="s0">plt</span><span class="s3">.</span><span class="s0">ylabel</span><span class="s3">(</span><span class="s5">&quot;Total Loss&quot;</span><span class="s3">)</span>
+<span class="s0">plt</span><span class="s3">.</span><span class="s0">title</span><span class="s3">(</span><span class="s5">&quot;PINN Training Loss&quot;</span><span class="s3">)</span>
+<span class="s0">plt</span><span class="s3">.</span><span class="s0">yscale</span><span class="s3">(</span><span class="s5">&quot;log&quot;</span><span class="s3">)</span>
+<span class="s0">plt</span><span class="s3">.</span><span class="s0">grid</span><span class="s3">(</span><span class="s2">True</span><span class="s3">)</span>
+
+<span class="s0">plt</span><span class="s3">.</span><span class="s0">show</span><span class="s3">()</span><hr class="ls0"><span class="s0">#%% 
+</span><hr class="ls0"><span class="s0">#%% 
+</span></pre>
+</body>
+</html>
